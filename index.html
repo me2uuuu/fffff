@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrrThermalView</title>
+  <style>
+    @font-face {
+      font-family: 'PrrWaveVF';
+      src: url('PrrWaveVF.woff2') format('woff2');
+    }
+
+    body {
+      background: linear-gradient(to bottom, #111, #000);
+      color: #0ff;
+      font-family: 'PrrWaveVF', sans-serif;
+      font-size: 3rem;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .thermal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/f/f9/Thermal_Image_of_a_Dog.jpg') center/cover no-repeat;
+      mix-blend-mode: screen;
+      filter: blur(10px) hue-rotate(0deg);
+      opacity: 0.25;
+      z-index: -1;
+      transition: all 0.2s ease;
+    }
+
+    .reactive-text {
+      margin-top: 25vh;
+      font-variation-settings: 'wght' 100;
+      transition: font-variation-settings 0.1s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="thermal-overlay" id="thermal"></div>
+  <div class="reactive-text" id="text">Thermal Rhythm</div>
+  <audio id="audio" controls autoplay loop>
+    <source src="track.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    const text = document.getElementById('text');
+    const audio = document.getElementById('audio');
+    const thermal = document.getElementById('thermal');
+
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 256;
+    const data = new Uint8Array(analyser.frequencyBinCount);
+
+    let source;
+    audio.onplay = () => {
+      if (!source) {
+        source = context.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(context.destination);
+      }
+      function animate() {
+        requestAnimationFrame(animate);
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((a, b) => a + b, 0) / data.length;
+        const weight = Math.min(900, 100 + avg * 5);
+        const blur = 5 + avg / 15;
+        const hue = avg * 1.5 % 360;
+        const opacity = Math.min(0.7, 0.2 + avg / 400);
+
+        text.style.fontVariationSettings = `'wght' ${weight.toFixed(0)}`;
+        thermal.style.filter = `blur(${blur}px) hue-rotate(${hue}deg)`;
+        thermal.style.opacity = opacity.toFixed(2);
+      }
+      animate();
+    };
+  </script>
+</body>
+</html>
