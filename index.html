@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PrrWave Music Reactive</title>
+  <title>Rhythm Reactive Font</title>
   <style>
     @font-face {
       font-family: 'PrrWaveVF';
@@ -11,47 +11,50 @@
     }
 
     body {
-      background: black;
-      color: cyan;
+      background-color: #000;
+      color: #0ff;
       font-family: 'PrrWaveVF', sans-serif;
-      font-size: 4rem;
+      font-size: 3rem;
       text-align: center;
-      padding-top: 20vh;
+      margin-top: 20vh;
     }
 
-    .reactive {
+    .reactive-text {
       font-variation-settings: 'wght' 100;
       transition: font-variation-settings 0.1s ease-in-out;
     }
   </style>
 </head>
 <body>
-  <div class="reactive" id="text">PrrWave 🎵 Listening...</div>
-  <audio id="audio" src="sound.mp3" controls autoplay loop></audio>
+  <div class="reactive-text" id="text">PrrWave Reactive Text</div>
+  <audio id="audio" controls autoplay loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3">
+    Your browser does not support the audio element.
+  </audio>
 
   <script>
-    const audio = document.getElementById('audio');
     const text = document.getElementById('text');
+    const audio = document.getElementById('audio');
 
-    const context = new AudioContext();
-    const src = context.createMediaElementSource(audio);
+    const context = new (window.AudioContext || window.webkitAudioContext)();
     const analyser = context.createAnalyser();
-
-    src.connect(analyser);
-    analyser.connect(context.destination);
-
+    analyser.fftSize = 256;
     const data = new Uint8Array(analyser.frequencyBinCount);
 
-    function animate() {
-      requestAnimationFrame(animate);
-      analyser.getByteFrequencyData(data);
-      const avg = data.reduce((a, b) => a + b, 0) / data.length;
-      const weight = Math.min(900, 100 + avg * 5);
-      text.style.fontVariationSettings = `'wght' ${weight.toFixed(0)}`;
-    }
-
+    let source;
     audio.onplay = () => {
-      if (context.state === 'suspended') context.resume();
+      if (!source) {
+        source = context.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(context.destination);
+      }
+      function animate() {
+        requestAnimationFrame(animate);
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((a, b) => a + b, 0) / data.length;
+        const weight = Math.min(900, 100 + avg * 5);
+        text.style.fontVariationSettings = `'wght' ${weight.toFixed(0)}`;
+      }
       animate();
     };
   </script>
