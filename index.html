@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rhythm Reactive Font</title>
+  <style>
+    @font-face {
+      font-family: 'PrrWaveVF';
+      src: url('./PrrWaveVF.woff2') format('woff2');
+    }
+
+    body {
+      background-color: #000;
+      color: #0ff;
+      font-family: 'PrrWaveVF', sans-serif;
+      font-size: 3rem;
+      text-align: center;
+      margin-top: 20vh;
+    }
+
+    .reactive-text {
+      font-variation-settings: 'wght' 100;
+      transition: font-variation-settings 0.1s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="reactive-text" id="text">PrrWave Reactive Text</div>
+
+  <script>
+    const text = document.getElementById('text');
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        const context = new AudioContext();
+        const source = context.createMediaStreamSource(stream);
+        const analyser = context.createAnalyser();
+        source.connect(analyser);
+
+        const data = new Uint8Array(analyser.frequencyBinCount);
+
+        function animate() {
+          requestAnimationFrame(animate);
+          analyser.getByteFrequencyData(data);
+          const avg = data.reduce((a, b) => a + b, 0) / data.length;
+          const weight = Math.min(900, 100 + avg * 5);
+          text.style.fontVariationSettings = `'wght' ${weight.toFixed(0)}`;
+        }
+
+        animate();
+      })
+      .catch(err => {
+        console.error('Mic access error:', err);
+        text.innerText = 'Mic permission denied';
+      });
+  </script>
+</body>
+</html>
