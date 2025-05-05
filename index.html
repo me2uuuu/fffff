@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rhythm Reactive Font</title>
+  <title>PrrWave Music Reactive</title>
   <style>
     @font-face {
       font-family: 'PrrWaveVF';
@@ -11,49 +11,49 @@
     }
 
     body {
-      background-color: #000;
-      color: #0ff;
+      background: black;
+      color: cyan;
       font-family: 'PrrWaveVF', sans-serif;
-      font-size: 3rem;
+      font-size: 4rem;
       text-align: center;
-      margin-top: 20vh;
+      padding-top: 20vh;
     }
 
-    .reactive-text {
+    .reactive {
       font-variation-settings: 'wght' 100;
       transition: font-variation-settings 0.1s ease-in-out;
     }
   </style>
 </head>
 <body>
-  <div class="reactive-text" id="text">PrrWave Reactive Text</div>
+  <div class="reactive" id="text">PrrWave 🎵 Listening...</div>
+  <audio id="audio" src="sound.mp3" controls autoplay loop></audio>
 
   <script>
+    const audio = document.getElementById('audio');
     const text = document.getElementById('text');
 
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        const context = new AudioContext();
-        const source = context.createMediaStreamSource(stream);
-        const analyser = context.createAnalyser();
-        source.connect(analyser);
+    const context = new AudioContext();
+    const src = context.createMediaElementSource(audio);
+    const analyser = context.createAnalyser();
 
-        const data = new Uint8Array(analyser.frequencyBinCount);
+    src.connect(analyser);
+    analyser.connect(context.destination);
 
-        function animate() {
-          requestAnimationFrame(animate);
-          analyser.getByteFrequencyData(data);
-          const avg = data.reduce((a, b) => a + b, 0) / data.length;
-          const weight = Math.min(900, 100 + avg * 5);
-          text.style.fontVariationSettings = `'wght' ${weight.toFixed(0)}`;
-        }
+    const data = new Uint8Array(analyser.frequencyBinCount);
 
-        animate();
-      })
-      .catch(err => {
-        console.error('Mic access error:', err);
-        text.innerText = 'Mic permission denied';
-      });
+    function animate() {
+      requestAnimationFrame(animate);
+      analyser.getByteFrequencyData(data);
+      const avg = data.reduce((a, b) => a + b, 0) / data.length;
+      const weight = Math.min(900, 100 + avg * 5);
+      text.style.fontVariationSettings = `'wght' ${weight.toFixed(0)}`;
+    }
+
+    audio.onplay = () => {
+      if (context.state === 'suspended') context.resume();
+      animate();
+    };
   </script>
 </body>
 </html>
